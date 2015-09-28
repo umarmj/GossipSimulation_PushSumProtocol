@@ -1,0 +1,5 @@
+compile
+run 1000 3D gossip
+run 1000 full gossip
+run 1000 full push-sum
+run 1000 3D push-sum
