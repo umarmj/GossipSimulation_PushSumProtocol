@@ -3,3 +3,34 @@ run 1000 3D gossip
 run 1000 full gossip
 run 1000 full push-sum
 run 1000 3D push-sum
+compile
+8 Imp3D gossip
+run 8 Imp3D gossip
+run 8 3D gossip
+compile
+run 8 full gossip
+run 200 full gossip
+run 200 3D gossip
+compile
+run 10 3D gossip
+run 10 3D push-sum
+run 10 full push-sum
+run 10 line push-sum
+run 10 Imp3D push-sum
+compile
+run 1000 full push-sum
+run 2000 full push-sum
+run 1000 3D push-sum
+run 1331 3D push-sum
+run 1331 full push-sum
+compile
+run 1000 3D push-sum
+run 27 Imp3D push-sum
+run 27 full push-sum
+run 1000 Imp3D push-sum
+run 10000 Imp3D push-sum
+run 9261 Imp3D push-sum
+compile
+run 9261 Imp3D push-sum
+run 10000 Imp3D push-sum
+run 10000 3D push-sum

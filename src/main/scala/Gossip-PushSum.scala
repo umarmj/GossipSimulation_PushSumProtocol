@@ -55,11 +55,20 @@ class Manager extends Actor{
 	var numNodesLeft:Int = 0	
 	var numNodesTransmitting:Int = 0;
 	var numNodesDone:Int = 0;
+	var totalNodes:Int = 0;
 	println("I've been Summoned Fellas")
 	def receive = {
 		case CreateCommunicationNetwork(numberOfNodes, topology, algorithm) => {
-			numNodesLeft = numberOfNodes
-			for(i <- 0 until numberOfNodes){
+			if(topology == "3D" || topology == "Imp3D"){
+				totalNodes = pow((pow(numberOfNodes, 1.0/3.0) + .001).toInt,3.0).toInt
+				println("Spreading " + algorithm + " to " + totalNodes + " nodes")
+				numNodesLeft = totalNodes
+			}
+			else{
+				totalNodes = numberOfNodes
+				numNodesLeft = numberOfNodes
+			}
+			for(i <- 0 until totalNodes){
 				nodeList += context.actorOf(Props[GossipPushSumSimulator], name = "node"+i)
 				/*
 				* set the sum and weight at each node for if the algorithms is pushSum
@@ -89,9 +98,9 @@ class Manager extends Actor{
 					}
 				}
 				case "3D" => {
-					val cuberoot = (pow(numberOfNodes, 1.0/3.0) + .001).toInt ;
-					val gridSize = pow(cuberoot,3).toInt;
-					val nodes_plane = pow(cuberoot,2).toInt;
+					val cuberoot = (pow(numberOfNodes, 1.0/3.0) + .001).toInt 
+					val gridSize = pow(cuberoot,3).toInt
+					val nodes_plane = pow(cuberoot,2).toInt
 
 					for(i<-0 to gridSize-1)
 					{
@@ -157,9 +166,104 @@ class Manager extends Actor{
 						nodeList(i)!SetNeighbors(tempBuffer);
 					}
 				}  
+				
 				case "Imp3D" =>  {
 					//to be implemented
+
+					val cuberoot = (pow(numberOfNodes, 1.0/3.0) + .001).toInt ;
+					val gridSize = pow(cuberoot,3).toInt;
+					val nodes_plane = pow(cuberoot,2).toInt;
+
+					for(i<-0 to gridSize-1)
+					{
+						var tempBuffer = new ArrayBuffer[ActorRef]()
+						var indexMonitor = new ArrayBuffer[Int]()
+						var j = 123;
+
+						j = i/nodes_plane;
+
+						if(i-1>=0)
+						{
+							if( (i-1)/nodes_plane == j && (i-1) / cuberoot == i/cuberoot)
+							{
+								tempBuffer += nodeList(i-1)
+								indexMonitor += i-1
+								//nodeList(i)!SetNeighbors(nodeList(i-1))
+							}
+						}
+						
+						if((i+1) < ((j+1)*nodes_plane))
+						{
+							if( (i+1)/nodes_plane == j && (i+1) / cuberoot == i/cuberoot )
+							{
+								tempBuffer += nodeList(i+1)
+								indexMonitor += i+1
+								//nodeList(i)!SetNeighbors(nodeList(i+1))
+							}
+
+						}
+
+						if((i-cuberoot) >= 0)
+						{
+							if( ((i-cuberoot)/nodes_plane).toInt == j )
+							{
+								tempBuffer += nodeList(i-cuberoot)
+								indexMonitor += i-cuberoot
+								//nodeList(i)!SetNeighbors(nodeList(i-cuberoot))
+							}
+						}
+
+						if((i+cuberoot) < ((j+1)*nodes_plane))
+						{
+							if( ((i+cuberoot)/nodes_plane).toInt == j )
+							{
+								tempBuffer += nodeList(i+cuberoot)
+								indexMonitor += i+cuberoot
+								//nodeList(i)!SetNeighbors(nodeList(i+cuberoot))
+							}					
+						}
+
+						if(i-nodes_plane >= 0)
+						{
+							if( ((i-nodes_plane)/nodes_plane).toInt == j-1 )
+							{
+								tempBuffer += nodeList(i-nodes_plane)
+								indexMonitor += i-nodes_plane
+								//nodeList(i)!SetNeighbors(nodeList(i-nodes_plane))
+							}	
+						}
+
+						if(i+nodes_plane < gridSize)
+						{
+							if( ((i+nodes_plane)/nodes_plane).toInt == j+1)
+							{
+								tempBuffer += nodeList(i+nodes_plane)
+								indexMonitor += i+nodes_plane
+								//nodeList(i)!SetNeighbors(nodeList(i+nodes_plane))
+							}	
+						}
+
+						
+						//val r = scala.util.Random;
+						var random_num_new_neighbor = Random.nextInt(gridSize - 1)
+						if(indexMonitor.exists(_ == random_num_new_neighbor) == true){
+							while (indexMonitor.exists(_ == random_num_new_neighbor) == true){
+								random_num_new_neighbor = Random.nextInt(gridSize - 1)
+							}
+						}
+						tempBuffer += nodeList(random_num_new_neighbor)
+
+						/*println("Neighbors of" + i  + ": ")
+						for(k<-0 to tempBuffer.length-1)
+						{
+							println(tempBuffer(k))
+						}*/
+						
+
+						nodeList(i)!SetNeighbors(tempBuffer);
+					}
 				} 
+
 				case _ => {
 					println("Unrecognized Communication network")
 					context.system.shutdown()
@@ -210,6 +314,7 @@ class Manager extends Actor{
 			numNodesLeft -= 1
 			numNodesDone -= 1
 			println ("PushSum from " + name + ": " + ratio )
+			println("Time to compute: " + (System.currentTimeMillis() - time) + " miliseconds")
 			context.system.shutdown()
 			/*if(numNodesLeft == 0){
 				println("Number of Nodes Transmitted: " + numNodesTransmitting)
