@@ -24,7 +24,7 @@ case class ForwardPushSum(sum:Double, weight:Double)
 case class FinishPushSum(ratio:Double, name:String)
 case object Rumor //for gossip communication
 case object Gossip //for transmitting rumor
-case object Finish //Node tells that its done. 
+case class Finish(name:String) //Node tells that its done. 
 
 
 
@@ -173,13 +173,13 @@ class Manager extends Actor{
 					val cuberoot = (pow(numberOfNodes, 1.0/3.0) + .001).toInt ;
 					val gridSize = pow(cuberoot,3).toInt;
 					val nodes_plane = pow(cuberoot,2).toInt;
-
+					var countImp3D:Int = 0;
 					for(i<-0 to gridSize-1)
 					{
 						var tempBuffer = new ArrayBuffer[ActorRef]()
 						var indexMonitor = new ArrayBuffer[Int]()
 						var j = 123;
-
+						countImp3D += 1
 						j = i/nodes_plane;
 
 						if(i-1>=0)
@@ -245,13 +245,27 @@ class Manager extends Actor{
 
 						
 						//val r = scala.util.Random;
-						var random_num_new_neighbor = Random.nextInt(gridSize - 1)
-						if(indexMonitor.exists(_ == random_num_new_neighbor) == true){
-							while (indexMonitor.exists(_ == random_num_new_neighbor) == true){
-								random_num_new_neighbor = Random.nextInt(gridSize - 1)
+						if(algorithm == "gossip"){
+							if(countImp3D % (gridSize/2) == 0){
+								var random_num_new_neighbor = Random.nextInt(gridSize)
+								if(indexMonitor.exists(_ == random_num_new_neighbor) == true|| random_num_new_neighbor == i){
+									while (indexMonitor.exists(_ == random_num_new_neighbor) == true || random_num_new_neighbor == i){
+										random_num_new_neighbor = Random.nextInt(gridSize - 1)
+									}
+									tempBuffer += nodeList(random_num_new_neighbor)
+								}	
 							}
 						}
-						tempBuffer += nodeList(random_num_new_neighbor)
+						else{
+							var random_num_new_neighbor = Random.nextInt(gridSize)
+								if(indexMonitor.exists(_ == random_num_new_neighbor) == true|| random_num_new_neighbor == i){
+									while (indexMonitor.exists(_ == random_num_new_neighbor) == true || random_num_new_neighbor == i){
+										random_num_new_neighbor = Random.nextInt(gridSize - 1)
+									}
+									tempBuffer += nodeList(random_num_new_neighbor)
+								}	
+						}
+
 
 						/*println("Neighbors of" + i  + ": ")
 						for(k<-0 to tempBuffer.length-1)
@@ -295,9 +309,11 @@ class Manager extends Actor{
 			numNodesTransmitting += 1
 			numNodesDone += 1
 		}
-		case Finish => {
+		case Finish(name) => {
+			
 			numNodesLeft -= 1
 			numNodesDone -= 1
+			println(name+ " done: " + numNodesDone)
 			if(numNodesLeft == 0){
 				println("Number of Nodes Transmitted: " + numNodesTransmitting)
 				println("Number of Nodes Left: " + numNodesDone)
@@ -351,6 +367,8 @@ class GossipPushSumSimulator extends Actor{
 		}
 		case Rumor => {
 			rumorCount += 1
+
+			//println(self.path.name.toString() + ": " + rumorCount)
 			if(rumorCount == 1){
 				/*
 				*to transmit it the first time. 
@@ -373,7 +391,7 @@ class GossipPushSumSimulator extends Actor{
 				 /*
 				 *tell manager that i am done. and stop
 				 */
-				 manager ! Finish
+				 manager ! Finish(self.path.name)
 				 context.stop(self)
 			}
 			else{
@@ -385,6 +403,14 @@ class GossipPushSumSimulator extends Actor{
 		}
 		case RemoveNeighbor(neighbor) => {
 			neighbors = neighbors - neighbor
+			/*if(neighbors.length == 0){
+				println(self.path.name.toString() + " neighbors are zero")
+				manager ! Finish
+				for( i <- 0 until neighbors.length) {
+				 	neighbors(i) ! RemoveNeighbor(self)
+				 } 
+				 context.stop(self) 
+			}*/
 		}
 
 		/*methods specific to PushSum*/

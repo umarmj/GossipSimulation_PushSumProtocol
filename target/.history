@@ -34,3 +34,22 @@ compile
 run 9261 Imp3D push-sum
 run 10000 Imp3D push-sum
 run 10000 3D push-sum
+compile
+run 8 Imp3D gossip
+compile
+run 8 Imp3D gossip
+compile
+run 8 Imp3D gossip
+sbt
+compile
+run 8 3D gossip
+run 8 3D push-sum
+run 8 Imp3D push-sum
+run 8 Imp3D gossip
+compile
+run 512 line push-sum
+run 512 Imp3D push-sum
+run 512 Imp3D gossip
+compile
+run 1000 3D gossip
+run 1000 line gossip
