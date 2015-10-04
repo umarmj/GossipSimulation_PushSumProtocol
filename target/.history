@@ -53,3 +53,10 @@ run 512 Imp3D gossip
 compile
 run 1000 3D gossip
 run 1000 line gossip
+compile
+run 8 Imp3D gossip
+run 64 Imp3D gossip
+run 5000 Imp3D gossip
+run 1000 Imp3D push-sum
+run 100 Imp3D push-sum
+run 100 Imp3D gossip

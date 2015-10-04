@@ -25,6 +25,7 @@ case class FinishPushSum(ratio:Double, name:String)
 case object Rumor //for gossip communication
 case object Gossip //for transmitting rumor
 case class Finish(name:String) //Node tells that its done. 
+case class AssignRandomNeighbor(random:ActorRef)
 
 
 
@@ -245,7 +246,7 @@ class Manager extends Actor{
 
 						
 						//val r = scala.util.Random;
-						if(algorithm == "gossip"){
+						/*if(algorithm == "gossip"){
 							if(countImp3D % (gridSize/2) == 0){
 								var random_num_new_neighbor = Random.nextInt(gridSize)
 								if(indexMonitor.exists(_ == random_num_new_neighbor) == true|| random_num_new_neighbor == i){
@@ -264,7 +265,16 @@ class Manager extends Actor{
 									}
 									tempBuffer += nodeList(random_num_new_neighbor)
 								}	
-						}
+						}*/
+
+						var random_num_new_neighbor = Random.nextInt(gridSize)
+						if(indexMonitor.exists(_ == random_num_new_neighbor) == true|| random_num_new_neighbor == i){
+							while (indexMonitor.exists(_ == random_num_new_neighbor) == true || random_num_new_neighbor == i){
+								random_num_new_neighbor = Random.nextInt(gridSize - 1)
+							}
+							tempBuffer += nodeList(random_num_new_neighbor)
+							nodeList(random_num_new_neighbor) ! AssignRandomNeighbor(nodeList(i))
+						}	
 
 
 						/*println("Neighbors of" + i  + ": ")
@@ -313,7 +323,7 @@ class Manager extends Actor{
 			
 			numNodesLeft -= 1
 			numNodesDone -= 1
-			println(name+ " done: " + numNodesDone)
+			//println(name+ " done: " + numNodesDone)
 			if(numNodesLeft == 0){
 				println("Number of Nodes Transmitted: " + numNodesTransmitting)
 				println("Number of Nodes Left: " + numNodesDone)
@@ -360,10 +370,13 @@ class GossipPushSumSimulator extends Actor{
 	var stabilityCount: Int = 0
 	def receive = {
 		case SetNeighbors(neighborsFromMaster) => {
-			neighbors = neighborsFromMaster
+			neighbors ++= neighborsFromMaster
 			manager = sender
 			//("self: "+self + " neighbors: " + neighbors)
 			//context.system.shutdown()
+		}
+		case AssignRandomNeighbor(random) => {
+			neighbors += random
 		}
 		case Rumor => {
 			rumorCount += 1
